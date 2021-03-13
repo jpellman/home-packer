@@ -1,0 +1,127 @@
+{
+  "variables": {
+    "proxmox_host": "{{ env `PROXMOX_URL` }}",
+    "proxmox_user": "{{ env `PROXMOX_USERNAME` }}",
+    "proxmox_password": "{{ env `PROXMOX_PASSWORD` }}",
+    "proxmox_node": "maxwell",
+    "ansible_commit": "{{ env `ANSIBLE_COMMIT` }}",
+    "vm_name": "homelab-centos-7-x86_64-{{isotime \"2006-01-02\"}}",
+    "ks_file": "/srv/packer/seeds/centos7.cfg",
+    "cpu_cores": "2",
+    "ram_mb": "2048",
+    "disk_size_mb": "12288"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "boot_command": [
+        "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos7.cfg<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "disk_size": "{{ user `disk_size_mb` }}",
+      "guest_os_type": "RedHat_64",
+      "headless": true,
+      "http_directory": "/srv/packer/seeds",
+      "iso_urls": [
+        "http://mirror.cc.columbia.edu/pub/linux/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
+        "http://mirrors.mit.edu/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
+        "https://archive.kernel.org/centos-vault/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
+      ],
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
+      "ssh_username": "ansible",
+      "ssh_private_key_file": "/etc/ansible/.ssh/ansible-build_rsa",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "10000s",
+      "shutdown_command": "sudo /sbin/shutdown -P now",
+      "guest_additions_mode" : "attach",
+      "virtualbox_version_file": ".vbox_version",
+      "vm_name": "homelab-centos-7-x86_64",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "{{ user `ram_mb` }}"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "{{ user `cpu_cores` }}"
+        ]
+      ],
+      "format" : "ova",
+      "output_directory" : "/srv/packer/builds/ova/centos7"
+    },
+    {
+      "type": "proxmox-iso",
+      "http_directory": "/srv/packer/seeds",
+      "boot_command": [
+        "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos7.cfg<enter><wait>"
+      ],
+      "proxmox_url": "{{ user `proxmox_host` }}",
+      "username": "{{ user `proxmox_user` }}",
+      "password": "{{ user `proxmox_password` }}",
+      "node": "{{ user `proxmox_node` }}",
+      "iso_url": "https://archive.kernel.org/centos-vault/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
+      "iso_checksum": "sha256:659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
+      "iso_storage_pool": "local",
+      "vm_name": "{{ user `vm_name` }}",
+      "cores": "{{ user `cpu_cores` }}",
+      "memory": "{{ user `ram_mb` }}",
+      "os": "l26",
+      "network_adapters": [
+        {
+          "bridge": "vmbr0"
+        }
+	],
+      "disks":[
+		  {
+		    "type": "scsi",
+		    "disk_size": "{{ user `disk_size_mb` }}M",
+		    "storage_pool": "local-lvm",
+		    "storage_pool_type": "lvm"
+		  }
+	],
+      "template_name": "homelab-centos-7-x86_64",
+      "template_description" : "CentOS 7 template. Built from commit {{ user `ansible_commit` }} of ansible repository.",
+      "boot_wait": "10s",
+      "ssh_username": "ansible",
+      "ssh_private_key_file": "/etc/ansible/.ssh/ansible-build_rsa",
+      "ssh_port": 22,
+      "shutdown_command": "sudo /sbin/shutdown -P now"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": ["templates/centos7-vb-guest-additions.sh"],
+      "only": ["virtualbox-iso"]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "/etc/ansible/playbook-base.yml",
+      "role_paths" : [
+         "/etc/ansible/roles/base-ansible-setup"
+       ],
+      "group_vars" : "/etc/ansible/group_vars",
+      "inventory_groups" : "base-template",
+      "clean_staging_directory": true,
+      "override": {
+        "virtualbox-iso" : {
+          "extra_arguments": [ "--extra-vars 'ansible_public_key=\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJM1Plx5eVTQGKraWzpimg4MnS790Hdk/i7fvBXwV9cCoJAHwEQi5b1U5+lgj6G4os8GJ1v1Sc32Ax5expTDAt93KY07QgjePBqVfotCKOcs3KJGeyb5sNXFiotH/kwGiiXhJWO8Qq2N6djjsSDFI116GPrfBrALEWdgqczE5GFmjI7cbJQHwZQ+qp5SSysFuloRzddF6tTtCXX+Re0U3GmMDA8w1HdFiTqoyjCWCtoVGFhtMT5M0OgqMYID9Z/hLAozyTb9h2zCpeDHbxojmuA9G2qSLHnL//L6QWONWEkMjzWVF390tfBRWA1jBJQ4Gk/vo0/8kJX2GJC1L1Fdb3 jpellman@bruno\"'" ] 
+        }
+      }
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "output": "/srv/packer/builds/vagrant/centos7/homelab-centos7.box",
+        "type": "vagrant",
+	"only": ["virtualbox-iso"]
+      }
+    ]
+  ]
+}

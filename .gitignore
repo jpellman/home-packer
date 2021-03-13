@@ -1,0 +1,9 @@
+*.swp
+*.swo
+.packer
+*packer_cache*
+builds/*
+*.ova
+*.box
+.proxmoxrc
+*packer.log*
