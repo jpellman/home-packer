@@ -3,7 +3,7 @@
     "proxmox_host": "{{ env `PROXMOX_URL` }}",
     "proxmox_user": "{{ env `PROXMOX_USERNAME` }}",
     "proxmox_password": "{{ env `PROXMOX_PASSWORD` }}",
-    "proxmox_node": "maxwell",
+    "proxmox_node": "hypervisor01",
     "ansible_commit": "{{ env `ANSIBLE_COMMIT` }}",
     "vm_name": "homelab-centos-7-x86_64-{{isotime \"2006-01-02\"}}",
     "ks_file": "/srv/packer/seeds/centos7.cfg",
@@ -30,7 +30,7 @@
       "iso_checksum_type": "sha256",
       "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
       "ssh_username": "ansible",
-      "ssh_private_key_file": "/etc/ansible/.ssh/ansible-build_rsa",
+      "ssh_private_key_file": "/etc/ansible/.ssh/ansible-rsa",
       "ssh_port": 22,
       "ssh_wait_timeout": "10000s",
       "shutdown_command": "sudo /sbin/shutdown -P now",
@@ -88,7 +88,7 @@
       "template_description" : "CentOS 7 template. Built from commit {{ user `ansible_commit` }} of ansible repository.",
       "boot_wait": "10s",
       "ssh_username": "ansible",
-      "ssh_private_key_file": "/etc/ansible/.ssh/ansible-build_rsa",
+      "ssh_private_key_file": "/etc/ansible/.ssh/ansible-rsa",
       "ssh_port": 22,
       "shutdown_command": "sudo /sbin/shutdown -P now"
     }
@@ -101,16 +101,13 @@
     },
     {
       "type": "ansible-local",
-      "playbook_file": "/etc/ansible/playbook-base.yml",
-      "role_paths" : [
-         "/etc/ansible/roles/base-ansible-setup"
-       ],
+      "playbook_file": "/etc/ansible/playbooks/base.yml",
       "group_vars" : "/etc/ansible/group_vars",
       "inventory_groups" : "base-template",
       "clean_staging_directory": true,
       "override": {
         "virtualbox-iso" : {
-          "extra_arguments": [ "--extra-vars 'ansible_public_key=\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJM1Plx5eVTQGKraWzpimg4MnS790Hdk/i7fvBXwV9cCoJAHwEQi5b1U5+lgj6G4os8GJ1v1Sc32Ax5expTDAt93KY07QgjePBqVfotCKOcs3KJGeyb5sNXFiotH/kwGiiXhJWO8Qq2N6djjsSDFI116GPrfBrALEWdgqczE5GFmjI7cbJQHwZQ+qp5SSysFuloRzddF6tTtCXX+Re0U3GmMDA8w1HdFiTqoyjCWCtoVGFhtMT5M0OgqMYID9Z/hLAozyTb9h2zCpeDHbxojmuA9G2qSLHnL//L6QWONWEkMjzWVF390tfBRWA1jBJQ4Gk/vo0/8kJX2GJC1L1Fdb3 jpellman@bruno\"'" ] 
+          "extra_arguments": [ "--extra-vars 'ansible_public_key=\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxQfqNSbfPqJsyPILedFVPfJ9TC1bUR6jGf2jBkdQB8QqK5y5RlxhFT1dcfzz+TCwz2eXLchNtxXopchktrvnbQb3LZ6qzEli+oJZ9nw0oceODsDv+WQjh/OpNQe5f3afPoA/WN+7lUpa7ns7Pd7D+5+FsVUTq0SDtBFkA/ADjkWNp5B/dykfhRrizfDQoQbi/CIBfdwXmurgH+JbdHC0Y5wUVBodH5pM5czkfUgR09XloDwDECZnk0gIS101jVWMCxDN5i+q5Uot+xcJ/UroaO9DqsmZxx7DG2QZsFGKeKpwj1Df02E3XkNyYa5Runiqw3hObhTeaqptCEnbKzW0t jpellman@bruno\"'" ] 
         }
       }
     }
