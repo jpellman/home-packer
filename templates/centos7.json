@@ -5,7 +5,7 @@
     "proxmox_password": "{{ env `PROXMOX_PASSWORD` }}",
     "proxmox_node": "hypervisor01",
     "ansible_commit": "{{ env `ANSIBLE_COMMIT` }}",
-    "vm_name": "homelab-centos-7-x86_64-{{isotime \"2006-01-02\"}}",
+    "vm_name": "homelab-centos-7-{{isotime \"2006-01-02\"}}",
     "ks_file": "/srv/packer/seeds/centos7.cfg",
     "cpu_cores": "2",
     "ram_mb": "2048",
@@ -23,9 +23,7 @@
       "headless": true,
       "http_directory": "/srv/packer/seeds",
       "iso_urls": [
-        "http://mirror.cc.columbia.edu/pub/linux/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
-        "http://mirrors.mit.edu/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
-        "https://archive.kernel.org/centos-vault/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
+        "http://mirrors.oit.uci.edu/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
       ],
       "iso_checksum_type": "sha256",
       "iso_checksum": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
@@ -60,11 +58,12 @@
       "boot_command": [
         "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos7.cfg<enter><wait>"
       ],
+      "insecure_skip_tls_verify": true,
       "proxmox_url": "{{ user `proxmox_host` }}",
       "username": "{{ user `proxmox_user` }}",
       "password": "{{ user `proxmox_password` }}",
       "node": "{{ user `proxmox_node` }}",
-      "iso_url": "https://archive.kernel.org/centos-vault/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
+      "iso_url": "http://mirrors.oit.uci.edu/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
       "iso_checksum": "sha256:659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
       "iso_storage_pool": "local",
       "vm_name": "{{ user `vm_name` }}",
@@ -73,24 +72,28 @@
       "os": "l26",
       "network_adapters": [
         {
-          "bridge": "vmbr0"
+          "bridge": "vmbr0",
+          "model": "virtio",
+          "mac_address": "E2:EC:6C:28:D1:61",
+          "firewall": true
         }
 	],
       "disks":[
 		  {
-		    "type": "scsi",
+		    "type": "sata",
 		    "disk_size": "{{ user `disk_size_mb` }}M",
 		    "storage_pool": "local-lvm",
 		    "storage_pool_type": "lvm"
 		  }
 	],
-      "template_name": "homelab-centos-7-x86_64",
+      "template_name": "{{ user `vm_name` }}",
       "template_description" : "CentOS 7 template. Built from commit {{ user `ansible_commit` }} of ansible repository.",
       "boot_wait": "10s",
       "ssh_username": "ansible",
+      "ssh_timeout": "15m",
       "ssh_private_key_file": "/etc/ansible/.ssh/ansible-rsa",
       "ssh_port": 22,
-      "shutdown_command": "sudo /sbin/shutdown -P now"
+      "qemu_agent": true
     }
   ],
   "provisioners": [
