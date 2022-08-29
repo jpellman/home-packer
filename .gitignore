@@ -7,3 +7,4 @@ builds/*
 *.box
 .proxmoxrc
 *packer.log*
+.DS_Store
