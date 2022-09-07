@@ -24,11 +24,6 @@ variable "ansible_commit" {
   default = env("ANSIBLE_COMMIT")
 }
 
-variable "ks_file" {
-  type =  string
-  default = "/usr/local/srv/packer/seeds/alma8.cfg"
-}
-
 variable "cpu_cores" {
   type =  number
   default = 2
@@ -45,5 +40,5 @@ variable "disk_size_mb" {
 }
 
 locals {
-  vm_name = "homelab-alma-8-${formatdate("YYYY-MM-DD",timestamp())}"
+  vm_name = "homelab-debian-11-${formatdate("YYYY-MM-DD",timestamp())}"
 }
