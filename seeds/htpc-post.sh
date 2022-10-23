@@ -22,6 +22,15 @@ six==1.15.0
 EOF
 pip install -r /tmp/requirements.txt
 
+# Update Ansible user settings
+mkdir -p -m0700 /var/lib/ansible
+chown ansible:ansible /var/lib/ansible
+usermod -d /var/lib/ansible ansible
+if [ -d /home/ansible ]; then
+	rm -rf /home/ansible
+fi
+passwd -l ansible
+
 # Add Ansible service account to sudoers
 echo "htpc ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers.d/htpc
 
